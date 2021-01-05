@@ -74,3 +74,67 @@ GROUP BY tags.id
 ORDER BY counts DESC;
 
 
+/*Find users who have liked every single photo on the site*/
+SELECT 
+    users.username, COUNT(users.id) AS totalLikes
+FROM
+    users
+        JOIN
+    likes ON users.id = likes.user_id
+GROUP BY users.id
+HAVING totalLikes = (SELECT 
+        COUNT(*)
+    FROM
+        photos);
+        
+/*Find users who have never commented on a photo*/   
+SELECT 
+    users.username, comments.comment_text
+FROM
+    users
+        LEFT JOIN
+    comments ON users.id = comments.user_id
+GROUP BY users.id
+HAVING comment_text IS NULL;
+
+
+/*Find the percentage of our users who have either never commented on a photo or have commented on every photo*/
+SELECT 
+    tableA.totalA AS Commented,
+    (tableA.totalA / (SELECT 
+            COUNT(*)
+        FROM
+            users)) * 100 AS 'Percentage%',
+    tableB.totalB AS NeverCommented,
+    (tableB.TotalB / (SELECT 
+            COUNT(*)
+        FROM
+            users)) * 100 AS 'Percentage%'
+FROM
+    (SELECT 
+        COUNT(*) AS totalA
+    FROM
+        (SELECT 
+        users.username, COUNT(users.id) AS totalcomments
+    FROM
+        users
+    JOIN comments ON users.id = comments.user_id
+    GROUP BY users.id
+    HAVING totalcomments = (SELECT 
+            COUNT(*)
+        FROM
+            photos)) AS Com) AS tableA
+        JOIN
+    (SELECT 
+        COUNT(*) AS totalB
+    FROM
+        (SELECT 
+        users.username, comments.comment_text
+    FROM
+        users
+    LEFT JOIN comments ON users.id = comments.user_id
+    GROUP BY users.id
+    HAVING comment_text IS NULL) no_com) AS tableB;
+
+
+
